@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Cinéma - Les Taglines d'Affiches</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #f39c12;
+            --text-color: #ecf0f1;
+            --btn-choice: #2ecc71;
+            --btn-reveal: #e74c3c;
+            --btn-primary: #3498db;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        h1 { color: var(--accent-color); margin-bottom: 10px; }
+        h2 { color: #3498db; font-size: 1.2rem; margin-top: 0; }
+        p { line-height: 1.6; }
+        .tagline {
+            font-size: 1.6rem;
+            font-style: italic;
+            margin: 25px 0;
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-left: 4px solid var(--accent-color);
+            border-radius: 0 8px 8px 0;
+        }
+        button {
+            background-color: var(--btn-primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 8px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-reveal { background-color: var(--btn-reveal); }
+        .choices {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .choice-btn {
+            background-color: var(--btn-choice);
+            text-align: left;
+            padding: 12px 20px;
+        }
+        .poster-container {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .poster-container img {
+            max-width: 100%;
+            height: 380px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background: #000;
+        }
+        .hidden { display: none !important; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .rules-box {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid #3498db;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-app">
+    <!-- ÉCRAN 1 : ACCUEIL -->
+    <div id="intro-screen">
+        <h1>🎬 Quiz Cinéma : Les Taglines d'Affiches</h1>
+        <p>Saurez-vous retrouver de quel film cultissime est tirée la phrase inscrite sur l'affiche française officielle ?</p>
+        
+        <div class="rules-box">
+            <h3>Règles du jeu :</h3>
+            <ul>
+                <li>Une tagline s'affiche à chaque question.</li>
+                <li>Vous pouvez choisir d'afficher les 4 propositions pour deviner.</li>
+                <li>Ou bien cliquer sur <strong>« Voir la réponse directement »</strong> pour découvrir immédiatement l'affiche et le titre.</li>
+            </ul>
+        </div>
+
+        <button onclick="showExample()">Voir l'exemple</button>
+    </div>
+
+    <!-- ÉCRAN 2 : EXEMPLE (ALIEN) -->
+    <div id="example-screen" class="hidden">
+        <h2>Exemple officiel</h2>
+        <p>Voici à quoi ressemble une question et sa résolution :</p>
+        <p class="tagline">"Dans l'espace, personne ne vous entend crier."</p>
+        <div style="margin: 15px 0;">
+            <img src="https://media.senscritique.com/media/000022849558/300/alien_le_8eme_passager.png" alt="Alien" style="max-height: 300px; border-radius: 6px;">
+        </div>
+        <p style="color: var(--btn-choice); font-weight: bold;">Réponse : Alien, le 8ème passager</p>
+        <button onclick="startQuiz()">Commencer le Quiz 🚀</button>
+    </div>
+
+    <!-- ÉCRAN 3 : JEU / QUESTIONS -->
+    <div id="question-screen" class="hidden">
+        <h2 id="q-counter">Question 1 / 15</h2>
+        <p class="tagline" id="q-tagline"></p>
+
+        <div id="action-buttons">
+            <button onclick="showChoices()">Afficher les 4 propositions</button>
+            <button class="btn-reveal" onclick="revealAnswer()">Voir la réponse & l'affiche directement</button>
+        </div>
+
+        <div id="choices-container" class="choices"></div>
+
+        <div id="poster-container" class="poster-container">
+            <h3 id="answer-title" style="color: var(--btn-choice); font-size: 1.4rem; margin-bottom: 10px;"></h3>
+            <img id="answer-poster" src="" alt="Affiche du film">
+            <br><br>
+            <button onclick="nextQuestion()">Question suivante ➡️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Liste des 15 questions avec taglines officielles sur affiches françaises
+    const quizData = [
+        {
+            tagline: "L'innocence est la première victime de la guerre.",
+            answer: "Platoon",
+            poster: "https://media.senscritique.com/media/000012235259/300/platoon.jpg",
+            choices: ["Platoon", "Full Metal Jacket", "Apocalypse Now", "Voyage au bout de l'enfer"]
+        },
+        {
+            tagline: "Rien sur terre ne pouvait les séparer.",
+            answer: "Titanic",
+            poster: "https://media.senscritique.com/media/000021973040/300/titanic.png",
+            choices: ["Titanic", "Ghost", "Armageddon", "Pearl Harbor"]
+        },
+        {
+            tagline: "Ils sont venus, ils ont bu, ils ne se souviennent plus...",
+            answer: "Very Bad Trip",
+            poster: "https://media.senscritique.com/media/000020071499/300/very_bad_trip.jpg",
+            choices: ["Very Bad Trip", "Good Morning England", "Projet X", "Mes meilleures amies"]
+        },
+        {
+            tagline: "Les secours sont à 225 millions de kilomètres",
+            answer: "Seul sur Mars",
+            poster: "https://media.senscritique.com/media/000023614973/300/seul_sur_mars.png",
+            choices: ["Interstellar", "Seul sur Mars", "Gravity", "Premier Contact"]
+        },
+        {
+            tagline: "Le prochain pas de l'homme sera le plus grand.",
+            answer: "Interstellar",
+            poster: "https://media.senscritique.com/media/000022626458/300/interstellar.png",
+            choices: ["Seul sur Mars", "Interstellar", "Contact", "First Man"]
+        },
+        {
+            tagline: "Elle fut la première",
+            answer: "Les dents de la mer",
+            poster: "https://fr.web.img6.acsta.net/pictures/210/242/21024272_20130802174854374.jpg",
+            choices: ["Piranha", "Les dents de la mer", "En eaux troubles", "Deep Blue Sea"]
+        },
+        {
+            tagline: "Pour cette mission, son nom de code sera : Choc nourrice",
+            answer: "Baby-Sittor",
+            poster: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-2T8KlGzG9drBf2MnHYmLcWOP0Bv8GN9ixiC4mo2YEQ&s=10",
+            choices: ["Baby-Sittor", "Un flic à la maternelle", "Mary Poppins", "Mrs. Doubtfire"]
+        },
+        {
+            tagline: "Il y a des jours comme ça...",
+            answer: "Une journée en enfer",
+            poster: "https://fr.web.img6.acsta.net/medias/nmedia/18/36/04/16/18686568.jpg",
+            choices: ["Piège de cristal", "Une journée en enfer", "Expendables", "Equalizer"]
+        },
+        {
+            tagline: "Jamais à temps à l'école, Jamais à temps à la maison. Un jour, il se retrouve complètement hors du temps",
+            answer: "Retour vers le futur",
+            poster: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDKz5dSEGqjOa93m29iHIKAkp0BVJBATGWUO490CLLCA&s=10",
+            choices: ["Retour vers le futur", "L'Effet papillon", "Terminator", "La Machine à explorer le temps"]
+        },
+        {
+            tagline: "Sympa ta planète... On la prend !",
+            answer: "Mars Attacks!",
+            poster: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNC0dWzbWGujLGeHq2tWVc1aOI44ziktI1G9Cx4CDMzQ&s=10",
+            choices: ["Independence Day", "Mars Attacks!", "Men in Black", "La Soupe aux choux"]
+        },
+        {
+            tagline: "Vous connaissez le nom. Vous connaissez le numéro",
+            answer: "GoldenEye",
+            poster: "https://cinedweller.com/wp-content/uploads/2019/06/goldeneye-affiche.jpg",
+            choices: ["Demain ne meurt jamais", "GoldenEye", "Casino Royale", "Octopussy"]
+        },
+        {
+            tagline: "Il a fallu 65 millions d'années pour que cette aventure devienne possible.",
+            answer: "Jurassic Park",
+            poster: "https://media.senscritique.com/media/000018579963/300/jurassic_park.jpg",
+            choices: ["Jurassic Park", "King Kong", "Le Monde Perdu", "Godzilla"]
+        },
+        {
+            tagline: "Du silence naît la peur.",
+            answer: "Le Silence des Agneaux",
+            poster: "https://media.senscritique.com/media/000018090547/300/le_silence_des_agneaux.jpg",
+            choices: ["Seven", "Le Silence des Agneaux", "Zodiac", "Shutter Island"]
+        },
+        {
+            tagline: "Libérez votre esprit.",
+            answer: "Matrix",
+            poster: "https://media.senscritique.com/media/000019232356/300/matrix.jpg",
+            choices: ["Matrix", "Inception", "Dark City", "Tron"]
+        },
+        {
+            tagline: "Votre esprit est la scène du crime.",
+            answer: "Inception",
+            poster: "https://media.senscritique.com/media/000018090595/300/inception.jpg",
+            choices: ["Memento", "Inception", "Shutter Island", "Prédestination"]
+        }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+
+    function showExample() {
+        document.getElementById('intro-screen').classList.add('hidden');
+        document.getElementById('example-screen').classList.remove('hidden');
+    }
+
+    function startQuiz() {
+        document.getElementById('example-screen').classList.add('hidden');
+        document.getElementById('question-screen').classList.remove('hidden');
+        currentIndex = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentIndex];
+        document.getElementById('q-counter').innerText = `Question ${currentIndex + 1} / ${quizData.length}`;
+        document.getElementById('q-tagline').innerText = `"${q.tagline}"`;
+        
+        document.getElementById('action-buttons').style.display = 'block';
+        document.getElementById('choices-container').style.display = 'none';
+        document.getElementById('poster-container').style.display = 'none';
+        
+        let choicesHtml = '';
+        [...q.choices].sort(() => Math.random() - 0.5).forEach(choice => {
+            choicesHtml += `<button class="choice-btn" onclick="checkChoice('${choice}')">${choice}</button>`;
+        });
+        document.getElementById('choices-container').innerHTML = choicesHtml;
+    }
+
+    function showChoices() {
+        document.getElementById('choices-container').style.display = 'flex';
+    }
+
+    function checkChoice(selected) {
+        const q = quizData[currentIndex];
+        if(selected === q.answer) {
+            score++;
+        }
+        revealAnswer();
+    }
+
+    function revealAnswer() {
+        const q = quizData[currentIndex];
+        document.getElementById('action-buttons').style.display = 'none';
+        document.getElementById('choices-container').style.display = 'none';
+        
+        document.getElementById('answer-title').innerText = `Réponse : ${q.answer}`;
+        document.getElementById('answer-poster').src = q.poster;
+        document.getElementById('poster-container').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if(currentIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            document.getElementById('quiz-app').innerHTML = `
+                <h1>Quiz terminé ! 🎉</h1>
+                <p>Votre score final : <strong>${score} / ${quizData.length}</strong></p>
+                <br>
+                <button onclick="location.reload()">Rejouer</button>
+            `;
+        }
+    }
+</script>
+
+</body>
+</html>
