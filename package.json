@@ -1,0 +1,23 @@
+{
+  "name": "quiz-cinema",
+  "version": "1.0.0",
+  "description": "Application de quizz sur le cinéma",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rochejul/quiz-cinema.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rochejul/quiz-cinema/issues"
+  },
+  "homepage": "https://github.com/rochejul/quiz-cinema#readme",
+  "devDependencies": {
+    "prettier": "3.10.1"
+  }
+}
